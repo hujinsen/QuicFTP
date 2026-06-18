@@ -29,7 +29,7 @@
 ### 安装
 
 ```bash
-git clone https://github.com/your-username/QuicFTP.git
+git clone https://github.com/hujinsen/QuicFTP.git
 cd QuicFTP
 cargo build --release
 ```
