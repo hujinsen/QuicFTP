@@ -34,6 +34,14 @@ cd QuicFTP
 cargo build --release
 ```
 
+
+
+### 添加用户
+
+```bash
+cargo run --bin quicftp-server -- user add alice --password mypassword
+```
+
 ### 启动服务器
 
 ```bash
@@ -41,12 +49,6 @@ cargo run --bin quicftp-server
 ```
 
 首次启动会自动生成 TLS 证书，无需手动配置。
-
-### 添加用户
-
-```bash
-cargo run --bin quicftp-server -- user add alice --password mypassword
-```
 
 ### 连接服务器
 
