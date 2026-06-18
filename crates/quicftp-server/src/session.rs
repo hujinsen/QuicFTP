@@ -3,11 +3,15 @@ use quicftp_common::protocol::{Command, Response, ResponseCode};
 use quinn::Connection;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::{debug, info, warn};
 
 use crate::handler;
 use crate::server::ServerState;
+
+const STREAM_TIMEOUT: Duration = Duration::from_secs(30);
+const DATA_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// A client session
 pub struct Session {
@@ -146,7 +150,12 @@ impl Session {
 
     /// Send file data to client on a new stream
     async fn send_file_data(&self, file_path: &PathBuf) -> Result<()> {
-        let (mut send, _recv) = self.connection.open_bi().await?;
+        let (mut send, _recv) = tokio::time::timeout(
+            STREAM_TIMEOUT,
+            self.connection.open_bi(),
+        )
+        .await
+        .map_err(|_| anyhow::anyhow!("打开文件发送流超时"))??;
 
         let data = tokio::fs::read(file_path).await.unwrap_or_default();
         let total_size = data.len() as u64;
@@ -164,16 +173,25 @@ impl Session {
 
     /// Receive file data from client on a new stream
     async fn receive_file_data(&self, file_path: &PathBuf) -> Result<u64> {
-        let (_send, mut recv) = self.connection.accept_bi().await?;
+        let (_send, mut recv) = tokio::time::timeout(
+            STREAM_TIMEOUT,
+            self.connection.accept_bi(),
+        )
+        .await
+        .map_err(|_| anyhow::anyhow!("接受文件接收流超时"))??;
 
         // Read file size (8 bytes)
         let mut size_buf = [0u8; 8];
-        recv.read_exact(&mut size_buf).await?;
+        tokio::time::timeout(DATA_TIMEOUT, recv.read_exact(&mut size_buf))
+            .await
+            .map_err(|_| anyhow::anyhow!("读取文件大小超时"))??;
         let file_size = u64::from_be_bytes(size_buf);
 
         // Read file data
         let mut data = vec![0u8; file_size as usize];
-        recv.read_exact(&mut data).await?;
+        tokio::time::timeout(DATA_TIMEOUT, recv.read_exact(&mut data))
+            .await
+            .map_err(|_| anyhow::anyhow!("读取文件数据超时"))??;
 
         // Create parent directory if needed
         if let Some(parent) = file_path.parent() {
@@ -189,7 +207,12 @@ impl Session {
 
     /// Send a response on the control stream
     async fn send_response(&self, response: &Response) -> Result<()> {
-        let (mut send, _recv) = self.connection.open_bi().await?;
+        let (mut send, _recv) = tokio::time::timeout(
+            STREAM_TIMEOUT,
+            self.connection.open_bi(),
+        )
+        .await
+        .map_err(|_| anyhow::anyhow!("打开响应流超时"))??;
         send.write_all(response.format().as_bytes()).await?;
         send.finish()?;
         Ok(())
