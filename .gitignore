@@ -1,0 +1,8 @@
+/target
+*.pem
+*.key
+*.crt
+config/users.toml
+ftp_root/
+.claude/
+test.txt

@@ -1,0 +1,25 @@
+# QuicFTP Server Configuration
+
+# Server bind address
+host = "0.0.0.0"
+
+# Server port
+port = 5000
+
+# TLS certificate path (PEM format)
+cert_path = "config/cert.pem"
+
+# TLS private key path (PEM format)
+key_path = "config/key.pem"
+
+# Users file path
+users_path = "config/users.toml"
+
+# FTP root directory
+root_dir = "./ftp_root"
+
+# Auto-generate self-signed certificate if not found
+auto_generate_cert = true
+
+# Maximum concurrent connections
+max_connections = 100

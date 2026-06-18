@@ -1,0 +1,18 @@
+[package]
+name = "quicftp-server"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "quicftp-server"
+path = "src/main.rs"
+
+[dependencies]
+quicftp-common = { path = "../quicftp-common" }
+tokio = { workspace = true }
+quinn = { workspace = true }
+rustls = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
